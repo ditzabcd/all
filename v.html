@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Love Animation for sahilaa</title>
+    <style>
+        body {
+            background-color: #ffebee;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            flex-direction: column;
+        }
+        
+        .loading-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 100;
+            transition: opacity 1s ease-out;
+        }
+        
+        .loading-text {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #fff;
+            text-shadow: 
+                0 0 5px #ff9a9e,
+                0 0 10px #ff6b8b,
+                0 0 20px #ff1493,
+                0 0 30px #ff69b4;
+            animation: neonGlow 1.5s ease-in-out infinite alternate;
+            position: relative;
+        }
+        
+        .loading-text::after {
+            content: "";
+            position: absolute;
+            bottom: -10px;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, #ff9a9e, transparent);
+            animation: loadingBar 2s linear infinite;
+        }
+        
+        .love-container {
+            position: relative;
+            text-align: center;
+            margin-bottom: 30px;
+            width: 100%;
+            height: 100px;
+        }
+        
+        .love-text {
+            font-size: 3rem;
+            font-weight: bold;
+            background: linear-gradient(45deg, #ff9a9e 0%, #fad0c4 99%, #fad0c4 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            animation: float 3s ease-in-out infinite;
+            text-shadow: 0 0 10px rgba(255, 192, 203, 0.5);
+        }
+        
+        .heart {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            background-color: #ff6b8b;
+            transform: rotate(45deg);
+            animation: hearts 4s ease-in-out infinite;
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .heart:before,
+        .heart:after {
+            content: '';
+            width: 30px;
+            height: 30px;
+            background-color: inherit;
+            border-radius: 50%;
+            position: absolute;
+        }
+        
+        .heart:before {
+            top: -15px;
+            left: 0;
+        }
+        
+        .heart:after {
+            top: 0;
+            left: -15px;
+        }
+        
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-20px);
+            }
+        }
+        
+        @keyframes hearts {
+            0% {
+                transform: rotate(45deg) translateY(0) scale(0);
+                opacity: 0;
+            }
+            50% {
+                opacity: 0.8;
+            }
+            100% {
+                transform: rotate(45deg) translateY(-200px) scale(1);
+                opacity: 0;
+            }
+        }
+        
+        @keyframes neonGlow {
+            from {
+                text-shadow: 
+                    0 0 5px #ff9a9e,
+                    0 0 10px #ff6b8b,
+                    0 0 20px #ff1493,
+                    0 0 30px #ff69b4;
+            }
+            to {
+                text-shadow: 
+                    0 0 10px #ff9a9e,
+                    0 0 20px #ff6b8b,
+                    0 0 30px #ff1493,
+                    0 0 40px #ff69b4;
+            }
+        }
+        
+        @keyframes loadingBar {
+            0% {
+                transform: translateX(-100%);
+            }
+            100% {
+                transform: translateX(100%);
+            }
+        }
+        
+        .audio-player {
+            margin-top: 20px;
+            background: rgba(255, 182, 193, 0.7);
+            padding: 15px;
+            border-radius: 50px;
+            box-shadow: 0 4px 15px rgba(255, 105, 180, 0.3);
+        }
+        
+        audio {
+            outline: none;
+        }
+        
+        audio::-webkit-media-controls-panel {
+            background-color: #ffc0cb;
+        }
+
+        .audio-error {
+            color: #d32f2f;
+            margin-top: 10px;
+            font-size: 0.9rem;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="loading-container" id="loadingScreen">
+        <div class="loading-text">gatau gabut :v</div>
+    </div>
+    
+    <div class="love-container">
+        <div class="love-text">I Love You Sahilaaa</div>
+    </div>
+    
+    <div class="audio-player">
+        <audio id="loveAudio" controls autoplay loop>
+            <source src="bersama.mp3" type="audio/mpeg">
+            Your browser does not support the audio element.
+        </audio>
+        <div id="audioError" class="audio-error">
+            Audio tidak dapat dimainkan. Pastikan file audio tersedia dan browser mendukung pemutaran audio.
+        </div>
+    </div>
+    
+    <script>
+        // Loading screen effect
+        const loadingScreen = document.getElementById('loadingScreen');
+        
+        // Hide loading screen after 3 seconds
+        setTimeout(() => {
+            loadingScreen.style.opacity = '0';
+            setTimeout(() => {
+                loadingScreen.style.display = 'none';
+            }, 1000);
+        }, 3000);
+        
+        function createHearts() {
+            const container = document.querySelector('.love-container');
+            const heart = document.createElement('div');
+            heart.className = 'heart';
+            
+            heart.style.left = Math.random() * 100 + 'px';
+            heart.style.animationDuration = (3 + Math.random() * 3) + 's';
+            
+            const hue = 330 + Math.random() * 30; // Warna antara pink ke merah muda
+            heart.style.backgroundColor = `hsl(${hue}, 100%, 75%)`;
+            
+            container.appendChild(heart);
+            
+            // Hapus elemen setelah animasi selesai
+            setTimeout(() => {
+                heart.remove();
+            }, 4000);
+        }
+        
+        setInterval(createHearts, 300);
+        
+        const loveText = document.querySelector('.love-text');
+        const originalText = loveText.textContent;
+        loveText.textContent = '';
+        
+        let i = 0;
+        const typingEffect = setInterval(() => {
+            if (i < originalText.length) {
+                loveText.textContent += originalText.charAt(i);
+                i++;
+            } else {
+                clearInterval(typingEffect);
+            }
+        }, 150);
+
+        const audio = document.getElementById('loveAudio');
+        const audioError = document.getElementById('audioError');
+
+        audio.addEventListener('error', function() {
+            audioError.style.display = 'block';
+            console.error('Error memutar audio. Pastikan:');
+            console.error('1. File audio ada di direktori yang benar');
+            console.error('2. Nama file sesuai (termasuk ekstensi .mp3)');
+            console.error('3. Browser mendukung format audio yang digunakan');
+        });
+
+        document.body.addEventListener('click', function() {
+            audio.play().catch(e => {
+                audioError.style.display = 'block';
+                audioError.textContent = 'Klik/tap layar untuk memutar audio. Beberapa browser memerlukan interaksi pengguna terlebih dahulu.';
+            });
+        }, { once: true });
+    </script>
+</body>
+</html>
