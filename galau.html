@@ -90,7 +90,7 @@
 </head>
 <body>
   <div class="player" id="player">
-    <div class="chip">DITZZ Player</div>
+    <div class="chip">DITZZ.</div>
     <div class="brand"><div class="dot"></div> Ditzz • Music</div>
     <div class="art"><img id="cover" alt="cover" src="" /></div>
     <div class="title" id="title">—</div>
@@ -134,17 +134,54 @@
   // Bisa 1 atau banyak (playlist). Cover opsional.
   const PLAYLIST = [
     {
-      title: "Monolog",
-      artist: "Ditzz Galau",
+      title: "monolog",
+      artist: "pamungkas",
       // contoh: https://username.github.io/repo/audio/lagu.mp3
       src: "https://dtz00.github.io/all/monologg.mp3",
       cover: "https://dtz00.github.io/all/128a807eb689a89c04d33b06b01c4d5e.jpg"
     },
     {
-      title: "Kapan kapan",
-      artist: "blm ada lagu",
-      src: "https://files.freemusicarchive.org/storage-freemusicarchive-org/music/no_curator/Kai_Engel/Better_Way/Kai_Engel_-_Better_Way_-_02_Moonlight_Reprise.mp3",
-      cover: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?q=80&w=1200&auto=format&fit=crop"
+      title: "rasa ini",
+      artist: "-vierra",
+      src: "https://dtz00.github.io/all/rasaini.mp3",
+      cover: "https://dtz00.github.io/all/847437b2f278c00e646a88e65c986882.jpg"
+    },
+    {
+    title: "bersamamu",
+      artist: "vierra",
+      src: "https://dtz00.github.io/all/bersama.mp3",
+      cover: "https://dtz00.github.io/all/1755426070770.jpg"
+    },
+    {
+    title: "resah jadi luka",
+      artist: "daun jatuh",
+      src: "https://dtz00.github.io/all/resah.mp3",
+      cover: "https://dtz00.github.io/all/b51d669011101bbb8ffb3d3032711504.jpg"
+    },
+    {
+    title: "kenang lah aku",
+      artist: "kenangan",
+      src: "https://dtz00.github.io/all/kenang.mp3",
+      cover: "https://dtz00.github.io/all/3670bf13bb0c2eeb426fe3d8a6f9207c.jpg"
+    },
+    {
+    title: "jaga slalu hatimu",
+      artist: "seventen",
+      src: "https://dtz00.github.io/all/jaga.mp3",
+      cover: "https://dtz00.github.io/all/153e600f02427076903a1cb23e401765.jpg"
+    },
+    {
+    title: "perpisahan termanis",
+      artist: "perpisahan",
+      src: "https://dtz00.github.io/all/perpisahan.mp3",
+      cover: "https://dtz00.github.io/all/1755428710951.jpg"
+    },
+    {
+      title: "tanpa cinta",
+      artist: "tidak bersamamu tidak dengan siapa saja",
+      src: "https://dtz00.github.io/all/tanpa.mp3",
+      cover: "https://dtz00.github.io/all/9094875576c6e5016dd63217120dfda0.jpg"
+
     }
   ];
   // ===============================================
@@ -174,7 +211,7 @@
     artistEl.textContent = track.artist || 'Unknown Artist';
     cover.src = track.cover || 'https://picsum.photos/600?blur=2';
     seekFill.style.width = '0%'; seekKnob.style.left = '0%'; curEl.textContent='0:00'; durEl.textContent='0:00';
-    document.title = `${track.title} • Ditzz Player`;
+    document.title = `${track.title} • Ditzz`;
     if ('mediaSession' in navigator){
       navigator.mediaSession.metadata = new MediaMetadata({
         title: track.title, artist: track.artist,
