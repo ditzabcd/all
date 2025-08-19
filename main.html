@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Firebase Geolocation</title>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js"></script>
+</head>
+<body>
+  <h2>🌍 Tes Lokasi dengan Firebase</h2>
+  <button onclick="getLocation()">Izinkan Lokasi</button>
+  <p id="status"></p>
+
+  <script>
+    // ✅ Config dari Firebase Console
+    const firebaseConfig = {
+  apiKey: "AIzaSyALlvGbKfnCSGizVUpVLHNeS4SN6SCSTZw",
+  authDomain: "location-tracker-12345.firebaseapp.com",
+  databaseURL: "https://location-tracker-12345-default-rtdb.firebaseio.com",
+  projectId: "location-tracker-12345",
+  storageBucket: "location-tracker-12345.firebasestorage.app",
+  messagingSenderId: "38589135127",
+  appId: "1:38589135127:web:7617dd49562cc3005f1f52",
+  measurementId: "G-BYZFPLLTHM"
+};
+
+
+    // ✅ Inisialisasi Firebase
+    const app = firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    function getLocation() {
+      const status = document.getElementById("status");
+
+      if (!navigator.geolocation) {
+        status.innerText = "❌ Browser tidak support lokasi";
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const lat = pos.coords.latitude;
+          const lon = pos.coords.longitude;
+
+          status.innerText = `✅ Lokasi disimpan!\nLat: ${lat}, Lon: ${lon}`;
+
+          // Simpan ke Firebase
+          const ref = db.ref("logs").push();
+          ref.set({
+            latitude: lat,
+            longitude: lon,
+            time: new Date().toISOString()
+          });
+        },
+        (err) => {
+          status.innerText = `❌ Error: ${err.message}`;
+        }
+      );
+    }
+  </script>
+</body>
+</html>
