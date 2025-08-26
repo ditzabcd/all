@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Auto Camera Capture</title>
+  <style>
+    body { display:flex; flex-direction:column; align-items:center; background:#111; color:#0f0; font-family:monospace; }
+    video, canvas { border:2px solid #0f0; border-radius:10px; margin:10px; }
+    #status { margin-top:20px; }
+  </style>
+</head>
+<body>
+  <h2>📷 Auto Camera Capture</h2>
+  <video id="video" autoplay playsinline width="300"></video>
+  <canvas id="canvas" width="300" height="200"></canvas>
+  <div id="status">Waiting for camera...</div>
+
+  <script>
+    const video = document.getElementById("video");
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+    const statusEl = document.getElementById("status");
+
+    async function initCamera() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        video.srcObject = stream;
+        statusEl.innerText = "Camera active! Taking photo in 3s...";
+
+        // Auto foto setelah 3 detik
+        setTimeout(() => {
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+          statusEl.innerText = "✅ Photo captured!";
+        }, 3000);
+
+      } catch (err) {
+        console.error("Camera error:", err);
+        statusEl.innerText = "❌ Kamera tidak bisa diakses.";
+      }
+    }
+
+    initCamera();
+  </script>
+</body>
+</html>
