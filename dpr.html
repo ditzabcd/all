@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>dpr.go.id</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: black;
+      font-family: "Courier New", monospace;
+      text-align: center;
+      overflow: hidden;
+      color: limegreen;
+    }
+
+    /* Background matrix hijau */
+    body::before {
+      content: "";
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: repeating-linear-gradient(
+        to bottom,
+        #002200,
+        #000000 2px,
+        #001100 4px
+      );
+      animation: matrix 0.6s infinite linear;
+      opacity: 0.7;
+      z-index: -1;
+    }
+
+    @keyframes matrix {
+      from { background-position-y: 0; }
+      to { background-position-y: 20px; }
+    }
+
+    /* Watermark */
+    .watermark {
+      position: absolute;
+      top: 15px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 4rem;
+      font-weight: bold;
+      color: limegreen;
+      text-shadow: 0 0 15px lime, 0 0 30px green;
+      letter-spacing: 5px;
+    }
+
+    /* Logo Garuda */
+    .garuda {
+      margin-top: 150px;
+      width: 180px;
+      filter: drop-shadow(0 0 15px red);
+    }
+
+    /* Text merah ala deface */
+    .text-red {
+      margin-top: 20px;
+      font-size: 1rem; /* kecil hacker style */
+      font-weight: bold;
+      color: red;
+      text-shadow: 0 0 5px darkred, 0 0 10px #ff0000;
+      white-space: pre-line;
+      letter-spacing: 2px;
+    }
+
+    /* Player musik */
+    audio {
+      margin-top: 40px;
+      width: 75%;
+      max-width: 400px;
+      filter: drop-shadow(0 0 8px red);
+    }
+  </style>
+</head>
+<body>
+  <div class="watermark">Ditz-</div>
+
+  <!-- Logo Garuda (ganti link PNG/SVG sesuai punya lu) -->
+  <img src="https://ditzabcd.github.io/all/99888fcea39921eb385e6aaeb07dc0fd.jpg" alt="Garuda" class="garuda">
+
+  <div class="text-red">
+    DITZ HATE DPR
+    hai dpr KONT0l<br>
+    -dpr tukang korupsi buat apa?
+  mending kentot aja
+  udh korupsi celah aman aja kaya nangkep ayam di kandang mau gw ajarin jadi orang jujur ga?+defense WEB 
+  DPR LAWAK DONGO KORUPSI DI GASAK
+  OTAK DI DENGKUL
+  WOWAOWK
+  
+  /.Deface~By-Ditz•|
+  </div>
+  
+
+  <!-- Player musik -->
+  <audio controls autoplay loop>
+    <source src="https://ditzabcd.github.io/all/kenang.mp3" type="audio/mpeg">
+    Browser lu gak support audio
+  </audio>
+</body>
+</html>
