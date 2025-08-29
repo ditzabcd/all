@@ -1,0 +1,442 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>QR Scanner — Kamera & Foto</title>
+<link rel="icon" href="data:;base64,iVBORw0KGgo=">
+<style>
+  :root{
+    --bg:#071023; --panel:#0d1730; --muted:#9fb4d6; --accent:#4fd1c5; --danger:#ff6b6b;
+    --glass: rgba(255,255,255,0.03);
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial;background:linear-gradient(180deg,#020617 0%, var(--bg) 100%);color:#e6f3ff}
+  .app{max-width:1100px;margin:18px auto;padding:16px;display:grid;grid-template-columns:1fr 360px;gap:16px}
+  header{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:12px}
+  h1{margin:0;font-size:18px;letter-spacing:.6px}
+  .sub{color:var(--muted);font-size:13px}
+  /* Left - Scanner */
+  .card{background:linear-gradient(180deg,var(--panel), #07132a);border-radius:12px;padding:12px;border:1px solid rgba(255,255,255,0.03);box-shadow:0 10px 30px rgba(0,0,0,.5)}
+  .viewer{position:relative;background:#000;border-radius:10px;overflow:hidden;height:70vh;display:flex;align-items:center;justify-content:center}
+  video, canvas#capture{width:100%;height:100%;object-fit:cover;display:block}
+  .overlay{
+    position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);pointer-events:none;
+    width:min(80%,720px);height:min(60%,480px);border:2px dashed rgba(255,255,255,0.15);border-radius:8px;
+    box-shadow:0 0 40px rgba(0,200,255,0.03) inset;
+  }
+  .controls{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+  button, select, input[type=file]{background:linear-gradient(180deg,#0f2a3d,#071a2b);color:var(--accent);border:1px solid rgba(255,255,255,0.04);padding:8px 10px;border-radius:10px;cursor:pointer}
+  button.primary{background:linear-gradient(180deg,#12b4a9,#0e8f7f);color:#041f1b;font-weight:700}
+  button.warn{background:linear-gradient(180deg,#ffb86b,#ff8b4a);color:#1a0d00}
+  .muted{color:var(--muted);font-size:13px}
+  /* Right - Panel */
+  .panel{display:flex;flex-direction:column;gap:10px}
+  .panel h3{margin:0;font-size:14px}
+  .list{background:var(--glass);padding:8px;border-radius:8px;max-height:56vh;overflow:auto;border:1px solid rgba(255,255,255,0.02)}
+  .item{display:flex;align-items:flex-start;justify-content:space-between;padding:8px;border-bottom:1px dashed rgba(255,255,255,0.02)}
+  .item .text{font-size:13px;color:#dfefff;word-break:break-all;margin-right:8px}
+  .item .meta{color:var(--muted);font-size:12px}
+  .row{display:flex;gap:8px;align-items:center}
+  .small{font-size:13px;color:var(--muted)}
+  footer{grid-column:1/-1;text-align:center;color:var(--muted);font-size:13px;padding-top:6px}
+  .hint{font-size:13px;color:var(--muted)}
+  /* responsive */
+  @media (max-width:980px){ .app{grid-template-columns:1fr;}.viewer{height:55vh} .panel{order:99} }
+</style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div>
+        <h1>QR Scanner — Kamera & Foto</h1>
+        <div class="sub">Scan QR secara real-time lewat kamera atau pilih foto dari galeri. Harus HTTPS / localhost.</div>
+      </div>
+      <div class="row">
+        <div class="small">Mode:</div>
+        <select id="cameraSelector" title="Pilih Kamera"><option value="">Mendeteksi...</option></select>
+      </div>
+    </header>
+
+    <section class="card">
+      <div class="viewer" id="viewer">
+        <video id="video" autoplay playsinline></video>
+        <canvas id="capture" style="display:none"></canvas>
+        <div class="overlay" id="overlay"></div>
+      </div>
+
+      <div class="controls" style="margin-top:10px">
+        <button id="btnStart" class="primary">▶ Mulai Kamera</button>
+        <button id="btnStop">⏸️ Stop</button>
+        <label style="display:inline-block">
+          <input id="fileInput" type="file" accept="image/*" style="display:none">
+          <button id="btnPick">📁 Pilih Foto</button>
+        </label>
+        <button id="btnTorch" style="display:none">🔦 Lampu</button>
+        <button id="btnSnap">📸 Ambil Snapshot</button>
+        <div style="margin-left:auto" class="small">HTTPS / localhost required for camera</div>
+      </div>
+
+      <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+        <div class="muted">Status:</div><div id="status" class="muted">Idle</div>
+      </div>
+    </section>
+
+    <aside class="panel card">
+      <div>
+        <h3>Hasil Scan (History)</h3>
+        <div class="list" id="history"></div>
+      </div>
+
+      <div>
+        <h3>Aksi Cepat</h3>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button id="btnCopy" class="">Copy Last</button>
+          <button id="btnOpen" class="">Open URL</button>
+          <button id="btnDownload" class="">Download Snapshot</button>
+          <button id="btnClear" class="warn">Clear History</button>
+        </div>
+      </div>
+
+      <div>
+        <h3>Pengaturan</h3>
+        <div class="row" style="justify-content:space-between;align-items:center">
+          <div class="small">Get beep on scan</div>
+          <input id="optBeep" type="checkbox" checked>
+        </div>
+        <div class="row" style="justify-content:space-between;align-items:center;margin-top:6px">
+          <div class="small">Vibrate on scan (mobile)</div>
+          <input id="optVib" type="checkbox" checked>
+        </div>
+      </div>
+    </aside>
+
+    <footer>Build for edukasi — hanya scan kode yang Anda miliki / milik Anda sendiri. Works best on HTTPS or localhost.</footer>
+  </div>
+
+<script src="https://unpkg.com/jsqr/dist/jsQR.js"></script>
+<script>
+/*
+  QR Scanner — JS only
+  - Live camera scanning using getUserMedia + canvas
+  - Pick image file and decode using jsQR
+  - History stored in localStorage
+  - Torch control if supported
+  - Beep + vibrate on success
+*/
+
+const video = document.getElementById('video');
+const canvas = document.getElementById('capture');
+const ctx = canvas.getContext('2d');
+const overlay = document.getElementById('overlay');
+const cameraSelector = document.getElementById('cameraSelector');
+const statusEl = document.getElementById('status');
+const historyEl = document.getElementById('history');
+
+let stream = null;
+let scanning = false;
+let scanLoopId = null;
+let lastResult = null;
+let devices = [];
+let currentDeviceId = null;
+let beepAudio = null;
+let lastSnapshotDataUrl = null;
+
+// options
+const OPT = { beep:true, vib:true };
+if(localStorage.getItem('qr_options')){
+  try{ Object.assign(OPT, JSON.parse(localStorage.getItem('qr_options'))); }catch{}
+}
+document.getElementById('optBeep').checked = OPT.beep;
+document.getElementById('optVib').checked = OPT.vib;
+
+document.getElementById('optBeep').addEventListener('change', (e)=>{ OPT.beep = e.target.checked; saveOptions(); });
+document.getElementById('optVib').addEventListener('change', (e)=>{ OPT.vib = e.target.checked; saveOptions(); });
+
+function saveOptions(){ localStorage.setItem('qr_options', JSON.stringify(OPT)); }
+
+// history management
+function pushHistory(text, rawType='qr', meta={}){
+  const item = { id: Date.now(), text, rawType, meta };
+  const list = JSON.parse(localStorage.getItem('qr_history')||'[]');
+  list.unshift(item);
+  localStorage.setItem('qr_history', JSON.stringify(list.slice(0,200)));
+  renderHistory();
+  lastResult = item;
+  updateActionButtons();
+}
+
+function renderHistory(){
+  historyEl.innerHTML = '';
+  const list = JSON.parse(localStorage.getItem('qr_history')||'[]');
+  if(list.length===0){ historyEl.innerHTML = '<div class="muted">Tidak ada history</div>'; return; }
+  for(const it of list){
+    const row = document.createElement('div');
+    row.className='item';
+    const left = document.createElement('div');
+    left.style.flex='1';
+    const text = document.createElement('div');
+    text.className='text';
+    text.textContent = it.text;
+    const meta = document.createElement('div');
+    meta.className='meta';
+    meta.textContent = new Date(it.id).toLocaleString();
+    left.appendChild(text);
+    left.appendChild(meta);
+    const right = document.createElement('div');
+    right.style.display='flex'; right.style.flexDirection='column'; right.style.gap='6px';
+    const btnCopy = document.createElement('button'); btnCopy.textContent='Copy';
+    btnCopy.onclick = ()=>{ navigator.clipboard.writeText(it.text).then(()=> showStatus('Disalin ke clipboard')); };
+    const btnOpen = document.createElement('button'); btnOpen.textContent='Open';
+    btnOpen.onclick = ()=>{ try{ window.open(it.text, '_blank'); }catch(e){ showStatus('Tidak bisa buka URL'); } };
+    const btnDel = document.createElement('button'); btnDel.textContent='Del'; btnDel.onclick = ()=>{
+      deleteHistoryItem(it.id);
+    };
+    right.appendChild(btnCopy); right.appendChild(btnOpen); right.appendChild(btnDel);
+    row.appendChild(left); row.appendChild(right);
+    historyEl.appendChild(row);
+  }
+}
+function deleteHistoryItem(id){
+  let list = JSON.parse(localStorage.getItem('qr_history')||'[]');
+  list = list.filter(x=>x.id!==id);
+  localStorage.setItem('qr_history', JSON.stringify(list));
+  renderHistory();
+  showStatus('Item dihapus');
+}
+function clearHistory(){
+  if(!confirm('Hapus semua history?')) return;
+  localStorage.removeItem('qr_history');
+  renderHistory();
+  showStatus('History dibersihkan');
+}
+document.getElementById('btnClear').addEventListener('click', clearHistory);
+
+// action buttons
+document.getElementById('btnCopy').addEventListener('click', ()=>{ if(!lastResult) return showStatus('Belum ada hasil'); navigator.clipboard.writeText(lastResult.text).then(()=> showStatus('Disalin')); });
+document.getElementById('btnOpen').addEventListener('click', ()=>{ if(!lastResult) return showStatus('Belum ada hasil'); try{ window.open(lastResult.text, '_blank'); }catch(e){ showStatus('Gagal buka'); } });
+document.getElementById('btnDownload').addEventListener('click', ()=>{
+  if(!lastSnapshotDataUrl) return showStatus('Belum ada snapshot untuk di-download');
+  const a=document.createElement('a'); a.href=lastSnapshotDataUrl; a.download='qr_snapshot.png'; a.click();
+});
+
+// snapshot button
+document.getElementById('btnSnap').addEventListener('click', ()=>{ takeSnapshot(true); });
+
+// file input (choose photo)
+const fileInput = document.getElementById('fileInput');
+document.getElementById('btnPick').addEventListener('click', ()=> fileInput.click());
+fileInput.addEventListener('change', async (e)=>{
+  const f = e.target.files[0];
+  if(!f) return;
+  const img = new Image();
+  img.onload = ()=>{ canvas.width = img.naturalWidth; canvas.height = img.naturalHeight; ctx.drawImage(img,0,0); decodeCanvasImage(); };
+  img.onerror = ()=> showStatus('Gagal membuka gambar'); 
+  img.src = URL.createObjectURL(f);
+});
+
+// camera start/stop
+document.getElementById('btnStart').addEventListener('click', ()=> startCamera());
+document.getElementById('btnStop').addEventListener('click', ()=> stopCamera());
+
+// torch button
+const btnTorch = document.getElementById('btnTorch');
+btnTorch.addEventListener('click', async ()=>{
+  if(!stream) return;
+  const videoTrack = stream.getVideoTracks()[0];
+  const imageCapture = new ImageCapture(videoTrack);
+  const cap = await videoTrack.getCapabilities();
+  if(cap && cap.torch){
+    const settings = videoTrack.getSettings();
+    const nowTorch = settings.torch===true;
+    try{ await videoTrack.applyConstraints({ advanced:[{torch: !nowTorch}] }); showStatus('Torch toggled'); }catch(e){ showStatus('Torch gagal'); }
+  } else showStatus('Torch tidak didukung');
+});
+
+// enumerate devices
+async function enumerateCameras(){
+  try{
+    const list = await navigator.mediaDevices.enumerateDevices();
+    devices = list.filter(d=>d.kind==='videoinput');
+    cameraSelector.innerHTML = '';
+    if(devices.length===0){ cameraSelector.innerHTML = '<option value=\"\">No camera</option>'; return; }
+    devices.forEach(d=>{
+      const opt = document.createElement('option');
+      opt.value = d.deviceId;
+      opt.text = d.label || ('Camera '+(cameraSelector.length+1));
+      cameraSelector.appendChild(opt);
+    });
+    cameraSelector.addEventListener('change', ()=>{ currentDeviceId = cameraSelector.value; if(stream) { startCamera(); } });
+  }catch(e){
+    console.warn('enumerateDevices failed', e);
+    cameraSelector.innerHTML = '<option value=\"\">Tidak tersedia</option>';
+  }
+}
+
+// start camera with optional deviceId
+async function startCamera(deviceId=null){
+  stopCamera();
+  try{
+    const constraints = {
+      audio:false,
+      video: deviceId ? {deviceId:{exact:deviceId}} : { facingMode: 'environment', width:{ideal:1280}, height:{ideal:720} }
+    };
+    stream = await navigator.mediaDevices.getUserMedia(constraints);
+    video.srcObject = stream;
+    video.setAttribute('playsinline', true);
+    await video.play();
+    // show torch button if available
+    try{
+      const track = stream.getVideoTracks()[0];
+      const cap = track.getCapabilities();
+      if(cap && cap.torch) btnTorch.style.display='inline-block'; else btnTorch.style.display='none';
+    }catch(e){ btnTorch.style.display='none'; }
+    scanning = true;
+    status('Camera aktif — scanning...');
+    canvas.width = video.videoWidth || 1280;
+    canvas.height = video.videoHeight || 720;
+    scanLoop(); // start decode loop
+  }catch(err){
+    console.error(err);
+    status('Gagal akses kamera — cek izin/HTTPS');
+  }
+}
+
+function stopCamera(){
+  scanning = false;
+  if(scanLoopId) cancelAnimationFrame(scanLoopId);
+  if(stream){
+    stream.getTracks().forEach(t=>t.stop());
+    stream = null;
+  }
+  status('Camera stopped');
+}
+
+function status(t){ statusEl.textContent = t; }
+
+// decode frame continuously
+function scanLoop(){
+  if(!scanning) return;
+  if(video.readyState === video.HAVE_ENOUGH_DATA){
+    // draw frame to canvas
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const imageData = ctx.getImageData(0,0,canvas.width,canvas.height);
+    const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'attemptBoth' });
+    if(code){
+      drawDetection(code.location);
+      handleDetected(code.data);
+    } else {
+      clearOverlay();
+    }
+  }
+  scanLoopId = requestAnimationFrame(scanLoop);
+}
+
+// draw detection box
+function drawDetection(loc){
+  // draw detection box on overlay canvas by using CSS border trick
+  overlay.style.display = 'block';
+  // We can draw a translucent box, but overlay is simple dashed rect - optionally we could transform it to match location.
+  // For simplicity, flash a small center indicator.
+  overlay.style.boxShadow = '0 0 40px rgba(0,200,255,0.12) inset';
+}
+
+// clear overlay
+function clearOverlay(){ overlay.style.boxShadow = 'none'; }
+
+// handle result (dedupe)
+let lastText = null;
+let lastTime = 0;
+function handleDetected(text){
+  // jsQR returns object with data property OR code.data provided earlier
+  const data = (typeof text === 'string') ? text : (text.data || '');
+  const now = Date.now();
+  if(data === lastText && (now - lastTime) < 2000) return; // ignore duplicates in short time
+  lastText = data; lastTime = now;
+  // snapshot
+  try{ lastSnapshotDataUrl = canvas.toDataURL('image/png'); }catch(e){ lastSnapshotDataUrl = null; }
+  // beep & vibrate
+  if(OPT.beep) playBeep();
+  if(OPT.vib && navigator.vibrate) navigator.vibrate(120);
+  pushHistory(data, 'qr', { from: 'camera' });
+  status('QR terdeteksi: ' + data);
+}
+
+// decode canvas image (for file pick)
+function decodeCanvasImage(){
+  try{
+    const imageData = ctx.getImageData(0,0,canvas.width,canvas.height);
+    const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'attemptBoth' });
+    if(code){
+      if(OPT.beep) playBeep();
+      if(OPT.vib && navigator.vibrate) navigator.vibrate(120);
+      pushHistory(code.data, 'qr', { from: 'image' });
+      showStatus('QR pada gambar: ' + code.data);
+      lastSnapshotDataUrl = canvas.toDataURL('image/png');
+    } else {
+      showStatus('Tidak menemukan QR pada gambar');
+    }
+  }catch(err){
+    showStatus('Gagal decode gambar');
+  }
+}
+
+// take snapshot from video
+function takeSnapshot(doSaveHistory=false){
+  if(!stream && video.paused) { showStatus('Tidak ada frame untuk snapshot'); return; }
+  const w = video.videoWidth || canvas.width, h = video.videoHeight || canvas.height;
+  canvas.width = w; canvas.height = h;
+  ctx.drawImage(video, 0, 0, w, h);
+  lastSnapshotDataUrl = canvas.toDataURL('image/png');
+  showStatus('Snapshot diambil');
+  if(doSaveHistory){
+    // try decode snapshot
+    try{ const imageData = ctx.getImageData(0,0,w,h); const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'attemptBoth' }); if(code) pushHistory(code.data,'qr',{from:'snapshot'}); }catch(e){}
+  }
+}
+
+// beep generation via Web Audio
+let audioCtx = null;
+function ensureAudio(){
+  if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+}
+function playBeep(){ try{ ensureAudio(); const t=audioCtx.currentTime; const o=audioCtx.createOscillator(); const g=audioCtx.createGain(); o.type='sine'; o.frequency.setValueAtTime(1200, t); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.08, t+0.01); g.gain.exponentialRampToValueAtTime(0.001, t+0.18); o.connect(g); g.connect(audioCtx.destination); o.start(t); o.stop(t+0.2); }catch(e){console.warn('playBeep err', e);} }
+
+// small helper
+function showStatus(msg){ status(msg); setTimeout(()=>{ if(statusEl.textContent===msg) status('Idle'); }, 3000); }
+
+// init
+(async function init(){
+  renderHistory();
+  updateActionButtons();
+  // probe devices if supported
+  if(navigator.mediaDevices && navigator.mediaDevices.enumerateDevices){
+    await enumerateCameras();
+  } else {
+    cameraSelector.innerHTML = '<option value=\"\">(Tidak mendukung enumerateDevices)</option>';
+  }
+  // prepare beep audio (unlocked by user gesture)
+  document.body.addEventListener('click', ()=>{ ensureAudio(); }, {once:true});
+})();
+
+function updateActionButtons(){
+  document.getElementById('btnCopy').disabled = !lastResult;
+  document.getElementById('btnOpen').disabled = !lastResult;
+  document.getElementById('btnDownload').disabled = !lastSnapshotDataUrl;
+}
+
+// utilities: try to read last snapshot for download
+function dataUrlToBlob(dataurl){
+  const arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1], bstr = atob(arr[1]), n = bstr.length, u8arr = new Uint8Array(n);
+  for(let i=0;i<n;i++) u8arr[i]=bstr.charCodeAt(i);
+  return new Blob([u8arr], {type:mime});
+}
+
+// when page hidden, stop camera to save battery
+document.addEventListener('visibilitychange', ()=>{ if(document.hidden) stopCamera(); });
+
+</script>
+</body>
+</html>
