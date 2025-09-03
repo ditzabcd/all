@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Text Alternator + Emoji — Convert</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#070707; --panel:#0d0d0f; --accent:#ff3b3b; --muted:#9aa7b2; --glass: rgba(255,255,255,0.03);
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial;background:linear-gradient(180deg,#000 0%, #070707 100%);color:#e6eef6}
+  .wrap{max-width:960px;margin:28px auto;padding:20px;display:grid;grid-template-columns:1fr 360px;gap:18px}
+  header{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:12px}
+  h1{margin:0;font-size:20px;letter-spacing:0.6px;color:var(--accent)}
+  .sub{color:var(--muted);font-size:13px}
+  .card{background:linear-gradient(180deg,var(--panel), #07101a);border-radius:12px;padding:14px;border:1px solid rgba(255,255,255,0.03);box-shadow:0 10px 30px rgba(0,0,0,.6)}
+  textarea{width:100%;height:260px;resize:vertical;background:#05060a;color:#e6eef6;border:1px solid rgba(255,255,255,0.03);padding:12px;border-radius:8px;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", "Segoe UI Mono", monospace; font-size:15px; line-height:1.5}
+  .controls{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+  button, input[type=range], select{background:linear-gradient(180deg,#0f2a3d,#071a2b);color:var(--accent);border:1px solid rgba(255,255,255,0.04);padding:8px 10px;border-radius:10px;cursor:pointer}
+  button.primary{background:linear-gradient(180deg,var(--accent),#c61f1f);color:#fff;font-weight:700}
+  .muted{color:var(--muted);font-size:13px}
+  .panel{display:flex;flex-direction:column;gap:10px}
+  .panel h3{margin:0;font-size:14px;color:var(--accent)}
+  .result{white-space:pre-wrap;background:rgba(255,255,255,0.02);padding:12px;border-radius:8px;min-height:140px;border:1px solid rgba(255,255,255,0.02);font-family:ui-monospace, monospace}
+  .row{display:flex;gap:8px;align-items:center}
+  label{font-size:13px;color:var(--muted)}
+  .small{font-size:13px;color:var(--muted)}
+  footer{grid-column:1/-1;text-align:center;color:var(--muted);font-size:13px;padding-top:6px}
+  @media (max-width:980px){ .wrap{grid-template-columns:1fr;}.panel{order:99} }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>Text Alternator + Emoji</h1>
+        <div class="sub">Masukkan teks → Convert → dapatkan pola alternating-case tiap kata + optional emoji</div>
+      </div>
+      <div class="small">Theme: Dark</div>
+    </header>
+
+    <section class="card">
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <label class="small">Input Text</label>
+        <textarea id="inputText" placeholder="Contoh: gua basis"></textarea>
+
+        <div class="controls">
+          <button id="btnConvert" class="primary">Convert</button>
+          <button id="btnCopy">Copy Result</button>
+          <button id="btnClear">Clear</button>
+          <div style="margin-left:auto" class="muted">Press <strong>Enter</strong> in input to convert</div>
+        </div>
+      </div>
+    </section>
+
+    <aside class="panel card">
+      <div>
+        <h3>Output</h3>
+        <div id="result" class="result"></div>
+      </div>
+
+      <div>
+        <h3>Options</h3>
+        <div class="row" style="align-items:center">
+          <label for="emojiCount">Max emojis:</label>
+          <input id="emojiCount" type="range" min="0" max="10" value="10" style="flex:1">
+          <div class="small" id="emojiCountLabel">3</div>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <label>Emoji set:</label>
+          <select id="emojiSet">
+            <option value="smile">Smile & Symbols</option>
+            <option value="tech">Tech & Geek</option>
+            <option value="random">Random Mix</option>
+          </select>
+        </div>
+        <div style="margin-top:10px;color:var(--muted);font-size:13px">
+          Notes: Alternating-case dimulai lowercase tiap kata. Non-letter (spasi/punct) tidak mengubah pola.
+        </div>
+      </div>
+
+      <div>
+        <h3>Preview Emoji</h3>
+        <div id="emojiPreview" class="result" style="min-height:48px"></div>
+      </div>
+    </aside>
+
+    <footer>Built for demo • copy & customize freely</footer>
+  </div>
+
+<script>
+/* Utilities */
+// emoji pools (semua pakai list yg sama)
+const EMOJI_LIST = [
+  "🗿","😹","🥹","😈","😨","🤤","🥵","☠️","😭","🤫","🤮","✌🏻","🙀","😱","🥀","😝",
+  "🤓","👙","💖","🔥","👍🏻","🤢","😂","🥶","😎","🥺","😺","🧢","👙","😏","🤯","💀",
+  "💀","🤪","😜","😝","🤨","🧐","😎","😡","🥵","🥶","😶‍🌫️","☹️","😖","🥺","🤢",
+  "🥴","😵","😈","👿","🤖","👹","👺","🤗","🤗","🤬","👍🏻","✌🏻","🫦","👅"
+];
+
+const EMOJI_POOLS = {
+  smile: EMOJI_LIST,
+  tech: EMOJI_LIST,
+  random: EMOJI_LIST
+};
+
+function randInt(min, max){
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+function pickEmojiSet(name){
+  return EMOJI_POOLS[name] || EMOJI_POOLS.random;
+}
+function pickEmojis(setName, count){
+  const pool = pickEmojiSet(setName);
+  const out = [];
+  for(let i=0;i<count;i++){
+    out.push(pool[Math.floor(Math.random()*pool.length)]);
+  }
+  return out.join("");
+}
+
+/* core: alternate-case per word (start lowercase), non-letters ignored for toggling */
+function alternateWord(word){
+  // We'll alternate only letters (Unicode letters). Non-letters are preserved and do not advance the toggle.
+  let out = "";
+  let lowerNext = true; // start lowercase for each word
+  for (let ch of word){
+    if (/\p{L}/u.test(ch)){ // letter
+      out += lowerNext ? ch.toLowerCase() : ch.toUpperCase();
+      lowerNext = !lowerNext;
+    } else {
+      out += ch; // keep punctuation, digits, etc
+    }
+  }
+  return out;
+}
+
+function convertText(input, emojiCount, emojiSetName){
+  // Split preserving whitespace so we can reconstruct exactly spaces/newlines
+  // We'll treat words separated by whitespace; each "word token" we'll alternate inside.
+  // Use regex to split into tokens of whitespace and non-whitespace
+  const tokens = input.split(/(\s+)/);
+  const converted = tokens.map(tok => {
+    if (/^\s+$/.test(tok)) return tok; // whitespace unchanged
+    // For tokens that may contain punctuation, we still alternate letters in the token as a whole.
+    return alternateWord(tok);
+  }).join("");
+
+  // append emojis at end if emojiCount > 0
+  const emojis = emojiCount > 0 ? " " + pickEmojis(emojiSetName, emojiCount) : "";
+  return converted + emojis;
+}
+
+/* UI wiring */
+const inputEl = document.getElementById("inputText");
+const outEl = document.getElementById("result");
+const btnConvert = document.getElementById("btnConvert");
+const btnCopy = document.getElementById("btnCopy");
+const btnClear = document.getElementById("btnClear");
+const emojiCountEl = document.getElementById("emojiCount");
+const emojiLabel = document.getElementById("emojiCountLabel");
+const emojiSetEl = document.getElementById("emojiSet");
+const emojiPreview = document.getElementById("emojiPreview");
+
+function renderEmojiPreview(){
+  const n = parseInt(emojiCountEl.value,10);
+  emojiLabel.textContent = n;
+  emojiPreview.textContent = n ? pickEmojis(emojiSetEl.value, n) : "(no emoji)";
+}
+emojiCountEl.addEventListener("input", renderEmojiPreview);
+emojiSetEl.addEventListener("change", renderEmojiPreview);
+renderEmojiPreview();
+
+function doConvert(){
+  const txt = inputEl.value || "";
+  const n = parseInt(emojiCountEl.value,10);
+  const setName = emojiSetEl.value;
+  const res = convertText(txt, n, setName);
+  outEl.textContent = res;
+}
+btnConvert.addEventListener("click", doConvert);
+
+btnCopy.addEventListener("click", function(){
+  const txt = outEl.textContent || "";
+  if (!txt) { alert("Tidak ada hasil untuk disalin"); return; }
+  navigator.clipboard.writeText(txt).then(()=> {
+    alert("Hasil disalin ke clipboard");
+  }).catch(()=> alert("Gagal salin"));
+});
+
+btnClear.addEventListener("click", function(){
+  inputEl.value = "";
+  outEl.textContent = "";
+});
+
+/* Enter key in textarea: convert */
+inputEl.addEventListener("keydown", function(e){
+  if (e.key === "Enter" && !e.shiftKey){
+    e.preventDefault();
+    doConvert();
+  }
+});
+</script>
+</body>
+</html>
