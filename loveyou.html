@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Lirik Sinkron</title>
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: pink;
+      overflow: hidden;
+      position: relative;
+      flex-direction: column;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    .overlay {
+      position: fixed;
+      top:0; left:0;
+      width:100%;
+      height:100%;
+      background: rgba(0,0,0,0.9);
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      flex-direction:column;
+      z-index: 9999;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 1s ease-in-out;
+    }
+    .overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .lyric {
+      font-size: 3em;
+      font-weight: 900; /* extra bold */
+      color: #ff1493;
+      white-space: nowrap;
+      animation: scrollText linear infinite;
+      animation-duration: 12s;
+    }
+
+    @keyframes scrollText {
+      0% { transform: translateX(120%); }
+      100% { transform: translateX(-120%); }
+    }
+
+    button {
+      padding: 12px 25px;
+      font-size: 18px;
+      font-weight: bold;
+      border: none;
+      border-radius: 10px;
+      background: #ff69b4;
+      color: white;
+      cursor: pointer;
+      z-index:10;
+    }
+
+    .falling {
+      position: absolute;
+      opacity: 0.9;
+      animation: fall linear forwards;
+    }
+    @keyframes fall {
+      0% { transform: translateY(-10vh); opacity: 1; }
+      100% { transform: translateY(100vh); opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+  <button onclick="startShow()">▶ Play Music</button>
+
+  <div id="overlay" class="overlay">
+    <div id="lyric" class="lyric"></div>
+  </div>
+
+  <audio id="bgSound" loop>
+    <source src="https://ditzabcd.github.io/all/ilove.m4a" type="audio/mp4">
+  </audio>
+
+  <script>
+    function createFalling() {
+      const el = document.createElement("div");
+      el.classList.add("falling");
+      const rand = Math.random();
+      if (rand < 0.33) {
+        el.innerText = "❤️";
+      } else if (rand < 0.66) {
+        el.innerText = "🌸";
+      } else {
+        el.innerText = "✦";
+        el.style.color = "white";
+      }
+      el.style.left = Math.random() * 100 + "vw";
+      el.style.fontSize = (20 + Math.random() * 25) + "px";
+      el.style.animationDuration = (3 + Math.random() * 5) + "s";
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 8000);
+    }
+
+    // Array lirik dengan jeda 2 detik antar "I LOVE YOU SOOOOOO"
+    const lyrics = [
+      { start: 0.0, text: "I LOVE YOU SOOOOOO" },
+      { start: 20.0, text: "I LOVE YOU SOOOOOO" }, // jeda 2 detik
+      { start: 14.0, text: "I LOVE YOU SOOOOOO" }, // jeda lagi 2 detik
+      { start: 100.5, text: "I gonna pack my Things and leave you behind" },
+      { start: 18.0, text: "this feeling's old and i know that i've made up my mind" },
+      { start: 25.0, text: "i hope you felt when you sharretd my soul" },
+      { start: 28.0, text: "cause you were cruel, and i'm a fool" },
+      { start: 32.0, text: "so please let me goo BUT I LOVE you sooooo (please let me go)" },
+      { start: 29.0, text: "i love you sooooo(please let me go)" },
+      { start: 33.0, text: "i lovee youuu sooo" }
+    ];
+
+    let lyricDiv = null;
+
+    function startShow() {
+      const overlay = document.getElementById("overlay");
+      const audio = document.getElementById("bgSound");
+      lyricDiv = document.getElementById("lyric");
+
+      overlay.classList.add("active");
+      audio.play().catch(err => console.log("Autoplay diblok:", err));
+
+      setInterval(createFalling, 300);
+
+      audio.addEventListener("timeupdate", () => {
+        const t = audio.currentTime;
+        for (let i = lyrics.length - 1; i >= 0; i--) {
+          if (t >= lyrics[i].start) {
+            lyricDiv.textContent = lyrics[i].text;
+            break;
+          }
+        }
+      });
+    }
+  </script>
+</body>
+</html>
