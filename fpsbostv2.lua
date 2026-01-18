@@ -1,49 +1,44 @@
 --[[
-    Ditz shadow code - Super FixLag Extreme
-    Fokus: Performa Maksimal, Tanpa Print, Tanpa Langit
-    Client: Bos-Tuan Besar / Nona Besar
+    Ditz shadow code - GOD MODE FPS (EXTREME)
+    Fokus: No Sky, No Clouds, No Particles, No Shadows, No Effects
+    Client: Bos-Tuan Besar
 ]]
 
--- KONFIGURASI NOTIFIKASI (Silakan Bos-Tuan Besar ubah teks di dalam tanda kutip)
-local Judul = "Ditz Shadow Code"
-local Pesan = "Super FixLag Berhasil Diaktifkan! 💼💰"
-
--- 1. NOTIFIKASI SISTEM
-game:GetService("StarterGui"):SetCore("SendNotification", {
-    Title = FIXLAG BYDITZZ;
-    Text = fixlag v2 byditz btw jngn aimbot lah sampah;
-    Duration = 5;
-})
-
--- 2. EXTREME PERFORMANCE (HAPUS LANGIT, AWAN & BAYANGAN)
+-- 1. HAPUS LANGIT DAN JADIKAN HITAM (MAKSIMAL FPS)
 local Lighting = game:GetService("Lighting")
 for _, v in pairs(Lighting:GetChildren()) do
-    v:Destroy() -- Menghapus Skybox, Atmosphere, dan Clouds agar langit polos
+    v:Destroy()
 end
 
 Lighting.GlobalShadows = false
 Lighting.FogEnd = 9e9
-Lighting.Brightness = 2 -- Menjaga visibilitas meski langit dihapus
-settings().Rendering.QualityLevel = 1
+Lighting.Brightness = 2 -- Tetap terang agar musuh kelihatan
+Lighting.OutdoorAmbient = Color3.fromRGB(150, 150, 150) -- Membuat lingkungan abu-abu/terang
 
--- 3. PEMBERSIHAN EFEK & PARTIKEL SECARA TOTAL
-local function Clean(v)
-    if v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Fire") or v:IsA("Smoke") or v:IsA("Sparkles") then
+-- 2. SUPER CLEANING (HAPUS SEMUA PARTIKEL & EFEK)
+local function UltraClean(v)
+    -- Hapus Efek Visual & Partikel
+    if v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Fire") or v:IsA("Smoke") or v:IsA("Sparkles") or v:IsA("Explosion") then
         v.Enabled = false
+        v:Destroy() -- Langsung hapus agar memori lega
+    -- Ubah Material ke Plastik Polos (Paling Ringan)
     elseif v:IsA("Part") or v:IsA("UnionOperation") or v:IsA("MeshPart") then
         v.Material = Enum.Material.SmoothPlastic
         v.CastShadow = false
-    elseif v:IsA("Decal") or v:IsA("Texture") then
-        v.Transparency = 1
+        v.Reflectance = 0
+    -- Hapus Awan
+    elseif v:IsA("Clouds") then
+        v:Destroy()
+    -- Hapus Efek Layar (Blur, Bloom, dsb)
     elseif v:IsA("PostEffect") or v:IsA("Bloom") or v:IsA("Blur") or v:IsA("SunRaysEffect") then
         v.Enabled = false
     end
 end
 
--- Eksekusi ke seluruh objek yang sudah ada
+-- Eksekusi awal untuk semua objek di map
 for _, obj in pairs(game:GetDescendants()) do
-    Clean(obj)
+    UltraClean(obj)
 end
 
--- Membersihkan objek baru yang muncul (saat skill dikeluarkan)
-game.Workspace.DescendantAdded:Connect(Clean)
+-- Pantau objek baru (Skill musuh/efek baru yang muncul)
+game.Workspace.DescendantAdded:Connect(UltraClean)
